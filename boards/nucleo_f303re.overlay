@@ -46,10 +46,10 @@
 		//  acceleration = < 200 >;
  
  
-		dir-gpios = < &arduino_header 18 0 >; /* D12 */
-		step-gpios = < &arduino_header 19 0 >; /* D13 */
-		sleep-gpios = < &arduino_header 15 GPIO_ACTIVE_LOW >; /* D9 */
-		en-gpios  = < &arduino_header 14 0 >; /* D8 */
+		dir-gpios = < &arduino_header 2 0 >; 
+		step-gpios = < &arduino_header 1 0 >; 
+		sleep-gpios = < &arduino_header 3 GPIO_ACTIVE_LOW >;
+		en-gpios  = < &arduino_header 4 0 >; 
 		m0-gpios = < &mikroe_stepper_gpios 0 0 >;
 		m1-gpios = < &mikroe_stepper_gpios 1 0 >;
 		timing-source = "counter-accel";
@@ -63,7 +63,7 @@
 	potentiometer_input: potentiometer_input {
                 compatible = "adc-keys";
                 keyup-threshold-mv = <10000>;
-                io-channels = <&adc1 3>;
+                io-channels = <&adc1 1>;
                 sample-period-ms = <100>;
 
                 potentiometer_key_1: potentiometer_key_1 {
@@ -100,10 +100,14 @@
  &adc1 {
 	#address-cells = <1>;
 	#size-cells = <0>;
-	pinctrl-0 = <&adc1_in3_pa3>;
+	status = "okay";
+	st,adc-clock-source = "SYNC";
+	st,adc-prescaler = < 0x2 >;
+	pinctrl-0 = < &adc1_in1_pa0 >;
+	pinctrl-names = "default";
 
-	channel@3 {/* ADC1/3 */
-		reg = <3>;
+	channel@1 {
+		reg = <1>;
 		zephyr,gain = "ADC_GAIN_1";
 		zephyr,reference = "ADC_REF_INTERNAL";
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
