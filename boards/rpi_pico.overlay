@@ -1,0 +1,148 @@
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	aliases {
+		sw0 = &btn;
+	};
+};
+
+/ {
+	zephyr,user {
+		// buttons = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+/ {
+	soc{
+		rpi_pico_pit_controller: rpi_pico_pit_controller {
+			status = "okay";
+			compatible = "raspberrypi,pico-pit";
+			clocks = <&clocks 0x5>;
+			interrupts = <0x4 0x3>;
+			interrupt-names = "PWM_IRQ_WRAP";
+			#pico-pit-controller-cells = <0>;
+
+			rpi_pico_pit_channel: rpi_pico_pit_channel {
+				status = "okay";
+				compatible = "raspberrypi,pico-pit-channel";
+				pwm_slice = <3>;
+
+				#pico-pit-channel-cells = <0>;
+			};
+			rpi_pico_pit_channel_2: rpi_pico_pit_channel_2 {
+				status = "okay";
+				compatible = "raspberrypi,pico-pit-channel";
+				pwm_slice = <4>;
+
+				#pico-pit-channel-cells = <0>;
+			};
+		};
+	};
+
+
+};
+
+&pwm {
+	// status = "okay";
+	divider-frac-2 = <15>;
+	divider-int-2 = <255>;
+};
+
+ &i2c1 {
+ 	status = "okay";
+
+ 	mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
+ 		status = "okay";
+ 		compatible = "ti,tca9538";
+
+ 		reg = < 0x70 >;
+
+ 		gpio-controller;
+ 		ngpios = < 8 >;
+ 		#gpio-cells = < 2 >;
+
+ 		gpio-reserved-ranges = < 7 1 >;
+
+ 		gpio-line-names =
+ 			"M0",
+ 			"M1",
+ 			"DEC0",
+ 			"DEC1",
+ 			"TOFF",
+ 			"STP",
+ 			"DIR";
+ 	};
+ };
+
+//Uncomment outside stepper tests
+/ {
+
+	stepper_motor: stepper_motor {
+		status = "okay";
+		compatible = "ti,drv8424";
+
+
+		dir-gpios = < &gpio0 20 0 >;
+		step-gpios = < &gpio0 19 0 >;
+		sleep-gpios = < &gpio0 21 GPIO_ACTIVE_LOW >;
+		en-gpios  = < &gpio0 18 0 >;
+		m0-gpios = < &mikroe_stepper_gpios 0 0 >;
+		m1-gpios = < &mikroe_stepper_gpios 1 0 >;
+		timing-source = "counter-accel";
+
+		counter = <&rpi_pico_pit_channel>;
+		acceleration = <800>;
+		accurate-steps = <15>;
+
+		#address-cells = < 1 >;
+		#size-cells = < 0 >;
+		#stepper-motor-cells = < 0 >;
+
+	};
+
+	buttons {
+		compatible = "gpio-keys";
+		btn: btn {
+			gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>;
+			// label = "BTN10";
+			zephyr,code = <INPUT_KEY_1>;
+		};
+	};
+
+	potentiometer_input: potentiometer_input {
+                compatible = "adc-keys";
+                keyup-threshold-mv = <10000>;
+                io-channels = <&adc 0>;
+                sample-period-ms = <100>;
+
+                potentiometer_key_1: potentiometer_key_1 {
+                        zephyr,code = <INPUT_KEY_1>;
+                        press-thresholds-mv = <413>;
+                };
+                potentiometer_key_2: potentiometer_key_2 {
+                        zephyr,code = <INPUT_KEY_2>;
+                        press-thresholds-mv = <1237>;
+                };
+                potentiometer_key_3: potentiometer_key_3 {
+                        zephyr,code = <INPUT_KEY_3>;
+                        press-thresholds-mv = <2062>;
+                };
+                potentiometer_key_4: potentiometer_key_4 {
+                        zephyr,code = <INPUT_KEY_4>;
+                        press-thresholds-mv = <2887>;
+                };
+        };
+};
+
+&adc {
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	channel@0 {/* ADC0 */
+		reg = <0>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};

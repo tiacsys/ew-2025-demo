@@ -1,0 +1,103 @@
+/*
+ * Copyright (c) 2023-2024 TiaC Systems
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+ #include <zephyr/dt-bindings/gpio/gpio.h>
+
+//  / {
+// 	 zephyr,user {
+// 		 stepper-motors = <&drv8424 0>;
+// 	 };
+//  };
+ 
+ &i2c1 {
+	 status = "okay";
+ 
+	 mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
+		 status = "okay";
+		 compatible = "ti,tca9538";
+ 
+		 reg = < 0x70 >;
+ 
+		 gpio-controller;
+		 ngpios = < 8 >;
+		 #gpio-cells = < 2 >;
+ 
+		 gpio-reserved-ranges = < 7 1 >;
+ 
+		 gpio-line-names =
+			 "M0",
+			 "M1",
+			 "DEC0",
+			 "DEC1",
+			 "TOFF",
+			 "STP",
+			 "DIR";
+	 };
+ };
+ 
+/ {
+ 
+	drv8424: drv8424 {
+		status = "okay";
+		compatible = "ti,drv8424";
+		//  acceleration = < 200 >;
+ 
+ 
+		dir-gpios = < &arduino_header 18 0 >; /* D12 */
+		step-gpios = < &arduino_header 19 0 >; /* D13 */
+		sleep-gpios = < &arduino_header 15 GPIO_ACTIVE_LOW >; /* D9 */
+		en-gpios  = < &arduino_header 14 0 >; /* D8 */
+		m0-gpios = < &mikroe_stepper_gpios 0 0 >;
+		m1-gpios = < &mikroe_stepper_gpios 1 0 >;
+		timing-source = "counter-accel";
+		
+		counter = <&counter2>;
+		acceleration = <1600>;
+		
+		
+	};
+};
+ 
+/ {
+	motor_1: motor_1 {
+		compatible = "zephyr,gpio-stepper";
+		status = "okay";
+		micro-step-res = <1>;
+		gpios = <&arduino_header 9 GPIO_ACTIVE_HIGH>,
+			<&arduino_header 10 GPIO_ACTIVE_HIGH>,
+			<&arduino_header 11 GPIO_ACTIVE_HIGH>,
+			<&arduino_header 12 GPIO_ACTIVE_HIGH>;
+	};
+
+	// tmc2209: tmc2209 {
+	// 	compatible = "adi,tmc2209";
+	// 	en-gpios = <&arduino_header 4 GPIO_ACTIVE_HIGH>;
+	// 	msx-gpios = <&arduino_header 5 GPIO_ACTIVE_HIGH>,
+	// 		    <&arduino_header 6 GPIO_ACTIVE_HIGH>;
+	// 	step-gpios = <&arduino_header 7 GPIO_ACTIVE_HIGH>;
+	// 	dir-gpios = <&arduino_header 8 GPIO_ACTIVE_HIGH>;
+	// 	micro-step-res = <8>;
+	// 	// dual-edge-step;
+	//     };
+};
+
+
+
+//  &pwm1 {
+// 	 pinctrl-0 = < &tim1_ch3_pe13 >;
+//  };
+ 
+ &timers2 {
+	 status = "okay";
+	 pwm2: pwm {
+		 status = "okay";
+		 pinctrl-0 = < &tim2_ch1_pa5 >;
+		 pinctrl-names = "default";
+	 };
+	 counter2: counter {
+		 status = "okay";
+	 };
+ };
+ 
