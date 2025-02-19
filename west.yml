@@ -1,0 +1,23 @@
+# Copyright (c) 2025 Navimatix GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    # Url for the Github organization where the Zephyr repository (or in this case a fork)
+    # is hosted. This can also be used to include other dependencies.
+    - name: tiacsys
+      url-base: https://github.com/tiacsys
+
+  projects:
+    # Definition of the Zephyr project to use
+    - name: zephyr
+      # We are using a fork of zephyr of the tiacsys organization
+      remote: tiacsys
+      # Zephyr branch used for this demo
+      revision: acceleration-demo
+      # Allows for calling o west commands without giving script source paths every time
+      west-commands: scripts/west-commands.yml
+      # Import all Zephyr sub-projects, which is the most convenient, especially during
+      # early development. If disk space is a concern, white and black lists are available
+      # so only some of them are imported.
+      import: true
