@@ -20,4 +20,9 @@ manifest:
       # Import all Zephyr sub-projects, which is the most convenient, especially during
       # early development. If disk space is a concern, white and black lists are available
       # so only some of them are imported.
-      import: true
+      # import: true
+      import:
+        name-allowlist:
+          - hal_stm32
+          - hal_rpi_pico
+          - cmsis
