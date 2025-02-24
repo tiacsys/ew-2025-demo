@@ -64,7 +64,7 @@
                 compatible = "adc-keys";
                 keyup-threshold-mv = <10000>;
                 io-channels = <&adc1 1>;
-                sample-period-ms = <100>;
+                sample-period-ms = <50>;
 
                 potentiometer_key_1: potentiometer_key_1 {
                         zephyr,code = <INPUT_KEY_1>;

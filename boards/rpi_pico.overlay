@@ -79,7 +79,7 @@
 
 		/* Timing source configuration */
 		counter = <&rpi_pico_pit_channel>;
-		acceleration = <800>;
+		acceleration = <1600>;
 		accurate-steps = <15>;
 
 		#address-cells = < 1 >;
@@ -94,7 +94,7 @@
                 compatible = "adc-keys";
                 keyup-threshold-mv = <10000>;
                 io-channels = <&adc 0>;
-                sample-period-ms = <100>;
+                sample-period-ms = <50>;
 
 		/* Key selection is based on the threshold that is closest to the current
 		   potentiometer value instead of defining borders. */

@@ -17,10 +17,9 @@ manifest:
       revision: acceleration-demo
       # Allows for calling o west commands without giving script source paths every time
       west-commands: scripts/west-commands.yml
-      # Import all Zephyr sub-projects, which is the most convenient, especially during
-      # early development. If disk space is a concern, white and black lists are available
-      # so only some of them are imported.
-      # import: true
+      # Import the external modules required for this project using a whitelist. During
+      # early development it is often easier to just import all modules with import: true
+      # but this requires additional disk space and might slow down the build process.
       import:
         name-allowlist:
           - hal_stm32

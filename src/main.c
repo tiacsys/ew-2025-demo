@@ -3,27 +3,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/init.h>
-#include "zephyr/devicetree.h"
 #include "zephyr/device.h"
-#include <zephyr/sys/printk.h>
-#include <zephyr/drivers/gpio.h>
+#include "zephyr/devicetree.h"
 #include <zephyr/drivers/counter.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/stepper.h>
-#include <zephyr/input/input.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
+#include <zephyr/init.h>
+#include <zephyr/input/input.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/printk.h>
 
-/* Defines speeds for the stepper motor, the api uses step interval timings in nanoseconds, and the
- * microstep resolution is set to 8 for this demo */
+/* Defines speeds for the stepper motor, the api uses step interval timings in
+ * nanoseconds, and the microstep resolution is set to 8 for this demo */
 #define SPEED0 1250000 /* 800 microsteps/s -> 100 full steps/s -> 0.5 revolutions/s */
 #define SPEED1 625000  /* 1600 microsteps/s -> 200 full steps/s -> 1.0 revolutions/s */
 #define SPEED2 416667  /* 2400 microsteps/s -> 150 full steps/s -> 1.5 revolutions/s */
 
-/* Event IDs, as we use two different event structs, the first two ids can be the same. */
+/* Event IDs, as we use two different event structs, the first two ids can be
+ * the same. */
 #define DEMO_EVENT_ID  0x001
 #define SPEED_EVENT_ID 0x001
 #define SLEEP_EVENT_ID 0x002
+
+#define SEGMENT_STEPS 6400
 
 /* User data for the input event callback*/
 struct speed_selection_data {
@@ -66,12 +69,21 @@ static void speed_selection(struct input_event *evt, void *user_data)
 		selection_data->speed = SPEED2;
 		k_event_post(&selection_data->speed_event, SPEED_EVENT_ID);
 	}
+	stepper_set_microstep_interval(selection_data->stepper, selection_data->speed);
 
-	if (!selection_data->deceleration_flag) {
-		stepper_set_microstep_interval(selection_data->stepper, selection_data->speed);
+	if (selection_data->speed != 0) {
+		if (selection_data->direction == STEPPER_DIRECTION_POSITIVE) {
+			stepper_move_to(selection_data->stepper, SEGMENT_STEPS);
+		} else {
+			stepper_move_to(selection_data->stepper, 0);
+		}
+	}
+	else {
 		stepper_run(selection_data->stepper, selection_data->direction);
 	}
-	printk("Speed Selection Code: %u\n", evt->code);
+	if (evt->value == 1) {
+		printk("Speed Selection Code: %u\n", evt->code);
+	}
 }
 
 /* Initialize Input callback, user data needs to be defined at compile time */
@@ -96,31 +108,22 @@ int main(void)
 	stepper_enable(data.stepper, true);
 	stepper_set_micro_step_res(data.stepper, 8);
 
-	/* We want to keep our motor turning, so this is an enless loop, but if we just want to
-	 * perform a specific task, it would not be nessecary. */
+	/* We want to keep our motor turning, so this is an enless loop, but if we
+	 * just want to perform a specific task, it would not be nessecary. */
 	while (true) {
 
 		/* Wait for a stepper motor speed > 0 */
 		(void)k_event_wait(&data.speed_event, SPEED_EVENT_ID, false, K_FOREVER);
 		stepper_set_microstep_interval(data.stepper, data.speed);
-		stepper_run(data.stepper, data.direction);
-		data.deceleration_flag = false;
-
-		/* We want to wait for either 6 seconds or until a speed of 0 (stopping the motor)
-		 * has been selected */
-		// TODO: Case: set speed to 0, than accelerate befor stop (check)
-		(void)k_event_wait(&data.speed_event, SLEEP_EVENT_ID, false, K_SECONDS(6));
-		k_event_clear(&data.speed_event, SLEEP_EVENT_ID);
-		data.deceleration_flag = true;
-
-		/* Decelerate and let the motor come to a stop */
-		stepper_set_microstep_interval(data.stepper, 0);
-		stepper_run(data.stepper, data.direction);
-
-		/* If speed not 0, wait for acceleration to finish */
-		if (data.speed != 0) {
-			events = k_event_wait(&demo_event, DEMO_EVENT_ID, true, K_SECONDS(5));
+		if (data.direction == STEPPER_DIRECTION_POSITIVE) {
+			stepper_move_to(data.stepper, SEGMENT_STEPS);
+		} else {
+			stepper_move_to(data.stepper, 0);
 		}
+
+		/* We want to wait for either 15 seconds (timeout), until the move_to command is
+		 * finished or until a speed of 0 (stopping the motor) has been selected. */
+		events = k_event_wait(&demo_event, DEMO_EVENT_ID, true, K_SECONDS(15));
 
 		/* Change direction */
 		if (data.direction == STEPPER_DIRECTION_POSITIVE) {
