@@ -19,7 +19,7 @@
  * nanoseconds, and the microstep resolution is set to 8 for this demo */
 #define SPEED0 1250000 /* 800 microsteps/s -> 100 full steps/s -> 0.5 revolutions/s */
 #define SPEED1 625000  /* 1600 microsteps/s -> 200 full steps/s -> 1.0 revolutions/s */
-#define SPEED2 416667  /* 2400 microsteps/s -> 150 full steps/s -> 1.5 revolutions/s */
+#define SPEED2 416667  /* 2400 microsteps/s -> 300 full steps/s -> 1.5 revolutions/s */
 
 /* Event IDs, as we use two different event structs, the first two ids can be
  * the same. */
@@ -81,11 +81,14 @@ static void speed_selection(struct input_event *evt, void *user_data)
 
 	if (evt->code == INPUT_KEY_1 && evt->value == 1) {
 		selection_data->speed = 0;
+		/* Clears speed event, as the motor is stopping and posts the sleep event instead.
+		 */
 		k_event_clear(&selection_data->speed_event, SPEED_EVENT_ID);
 		k_event_post(&selection_data->speed_event, SLEEP_EVENT_ID);
 	}
 	if (evt->code == INPUT_KEY_2 && evt->value == 1) {
 		selection_data->speed = SPEED0;
+		/* Posts speed event, as the stepper motor is moving. */
 		k_event_post(&selection_data->speed_event, SPEED_EVENT_ID);
 	}
 	if (evt->code == INPUT_KEY_3 && evt->value == 1) {
@@ -98,6 +101,7 @@ static void speed_selection(struct input_event *evt, void *user_data)
 	}
 	stepper_set_microstep_interval(selection_data->stepper, selection_data->speed);
 
+	/* Set motor into motion at new speed or cause it to stop. */
 	if (selection_data->speed != 0) {
 		if (selection_data->direction == STEPPER_DIRECTION_POSITIVE) {
 			stepper_move_to(selection_data->stepper, SEGMENT_STEPS);
@@ -107,6 +111,7 @@ static void speed_selection(struct input_event *evt, void *user_data)
 	} else if (selection_data->enabled) {
 		stepper_run(selection_data->stepper, selection_data->direction);
 	}
+	/* Print the input event value to console. */
 	if (evt->value == 1) {
 		printk("Speed Selection Code: %u\n", evt->code);
 	}
@@ -147,6 +152,7 @@ int main(void)
 		/* Enable stepper, as it might have been disabled */
 		stepper_enable(data.stepper, true);
 		data.enabled = true;
+		/* Set stepper motor into motion. */
 		stepper_set_microstep_interval(data.stepper, data.speed);
 		if (data.direction == STEPPER_DIRECTION_POSITIVE) {
 			stepper_move_to(data.stepper, SEGMENT_STEPS);
