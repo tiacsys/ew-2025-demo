@@ -77,8 +77,7 @@ static void speed_selection(struct input_event *evt, void *user_data)
 		} else {
 			stepper_move_to(selection_data->stepper, 0);
 		}
-	}
-	else {
+	} else {
 		stepper_run(selection_data->stepper, selection_data->direction);
 	}
 	if (evt->value == 1) {
@@ -105,7 +104,6 @@ int main(void)
 
 	/* Initial stepper configuration */
 	stepper_set_event_callback(data.stepper, stepper_callback, &demo_event);
-	stepper_enable(data.stepper, true);
 	stepper_set_micro_step_res(data.stepper, 8);
 
 	/* We want to keep our motor turning, so this is an enless loop, but if we
@@ -114,6 +112,8 @@ int main(void)
 
 		/* Wait for a stepper motor speed > 0 */
 		(void)k_event_wait(&data.speed_event, SPEED_EVENT_ID, false, K_FOREVER);
+		/* Enable stepper, as it might have been disabled */
+		stepper_enable(data.stepper, true);
 		stepper_set_microstep_interval(data.stepper, data.speed);
 		if (data.direction == STEPPER_DIRECTION_POSITIVE) {
 			stepper_move_to(data.stepper, SEGMENT_STEPS);
@@ -130,6 +130,10 @@ int main(void)
 			data.direction = STEPPER_DIRECTION_NEGATIVE;
 		} else {
 			data.direction = STEPPER_DIRECTION_POSITIVE;
+		}
+		/* Disable stepper motor if speed = 0. */
+		if (data.speed == 0) {
+			stepper_enable(data.stepper, false);
 		}
 	}
 
