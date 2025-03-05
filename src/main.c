@@ -13,6 +13,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/task_wdt/task_wdt.h>
 
 /* Defines speeds for the stepper motor, the api uses step interval timings in
  * nanoseconds, and the microstep resolution is set to 8 for this demo */
@@ -28,6 +29,9 @@
 
 #define SEGMENT_STEPS 6400
 
+/* Defines watchdog timeout. */
+#define WATCHDOG_TIMEOUT 5 * SEC_PER_MIN *MSEC_PER_SEC
+
 /* User data for the input event callback*/
 struct speed_selection_data {
 	enum stepper_direction direction;
@@ -35,7 +39,27 @@ struct speed_selection_data {
 	const struct device *stepper;
 	bool deceleration_flag;
 	struct k_event speed_event;
+	int32_t watchdog_channel;
+	bool enabled;
 };
+
+/* Watchdog callback to disable stepper motor if the speed hasn't changed for some time to save
+ * power and reduce heat buildup.*/
+void watchdog_callback(int channel_id, void *user_data)
+{
+	struct speed_selection_data *selection_data = user_data;
+
+	printk("Speed hasn't changed for some time, disabling motor.\n");
+
+	/* Decelerate stepper motor until it stops. */
+	selection_data->speed = 0;
+	stepper_set_microstep_interval(selection_data->stepper, selection_data->speed);
+	stepper_run(selection_data->stepper, selection_data->direction);
+
+	/* Clears speed event, as the motor is stopping and posts the sleep event instead. */
+	k_event_clear(&selection_data->speed_event, SPEED_EVENT_ID);
+	k_event_post(&selection_data->speed_event, SLEEP_EVENT_ID);
+}
 
 /* Stepper Callback, if stepper motor has stopped, send event */
 void stepper_callback(const struct device *dev, const enum stepper_event event, void *user_data)
@@ -51,6 +75,9 @@ void stepper_callback(const struct device *dev, const enum stepper_event event, 
 static void speed_selection(struct input_event *evt, void *user_data)
 {
 	struct speed_selection_data *selection_data = user_data;
+
+	/* Feeds watchdog, preventing stepper motor stop if speed is regularly changed. */
+	task_wdt_feed(selection_data->watchdog_channel);
 
 	if (evt->code == INPUT_KEY_1 && evt->value == 1) {
 		selection_data->speed = 0;
@@ -77,7 +104,7 @@ static void speed_selection(struct input_event *evt, void *user_data)
 		} else {
 			stepper_move_to(selection_data->stepper, 0);
 		}
-	} else {
+	} else if (selection_data->enabled) {
 		stepper_run(selection_data->stepper, selection_data->direction);
 	}
 	if (evt->value == 1) {
@@ -95,12 +122,17 @@ int main(void)
 	struct k_event demo_event;
 
 	/* Initialize various data and events */
-	data.speed = SPEED1;
+	data.speed = 0;
 	data.direction = STEPPER_DIRECTION_POSITIVE;
 	data.stepper = DEVICE_DT_GET(DT_ALIAS(stepper_motor));
 	data.deceleration_flag = false;
 	k_event_init(&data.speed_event);
 	k_event_init(&demo_event);
+
+	/* Initialize watchdog to cause the stepper motor to stop if the speed hasn't changed for
+	 * some time. */
+	task_wdt_init(NULL);
+	task_wdt_add(WATCHDOG_TIMEOUT, watchdog_callback, &data);
 
 	/* Initial stepper configuration */
 	stepper_set_event_callback(data.stepper, stepper_callback, &demo_event);
@@ -114,6 +146,7 @@ int main(void)
 		(void)k_event_wait(&data.speed_event, SPEED_EVENT_ID, false, K_FOREVER);
 		/* Enable stepper, as it might have been disabled */
 		stepper_enable(data.stepper, true);
+		data.enabled = true;
 		stepper_set_microstep_interval(data.stepper, data.speed);
 		if (data.direction == STEPPER_DIRECTION_POSITIVE) {
 			stepper_move_to(data.stepper, SEGMENT_STEPS);
@@ -134,6 +167,7 @@ int main(void)
 		/* Disable stepper motor if speed = 0. */
 		if (data.speed == 0) {
 			stepper_enable(data.stepper, false);
+			data.enabled = false;
 		}
 	}
 
