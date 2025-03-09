@@ -3,23 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/ {
-	model = "Raspberry Pi Pico @ USB-CDC/ACM Concole as EW25 demo";
-	compatible = "raspberrypi,rpi-pico-ew25",
-		     "raspberrypi,rpi-pico-ew25-usbcons";
-
-	chosen {
-		zephyr,console = &cdc_acm_console_uart;
-		zephyr,shell-uart = &cdc_acm_console_uart;
-	};
-};
-
-&zephyr_udc0 {
-	cdc_acm_console_uart: cdc_acm_console_uart {
-		compatible = "zephyr,cdc-acm-uart";
-	};
-};
-
 microbus_i2c: &pico_i2c1 {};
 #include "mikroe_stepper_19.dtsi"
 #include "potentiometer_input.dtsi"
