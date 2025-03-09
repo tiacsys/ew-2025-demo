@@ -3,106 +3,126 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
- #include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 
- / {
+/*
+ * Aliases for the devices used in the demo, this allows them
+ * to be used without knowing the exact hardware configuration.
+ */
+/ {
 	aliases {
 		input-device = &potentiometer_input;
 		stepper-motor = &drv8424;
 	};
 };
- 
- &i2c1 {
+
+&i2c1 {
 	 status = "okay";
- 
+
+	/*
+	 * Configuration of the extension board that houses
+	 * the stepper motor controller.
+	 */
 	 mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
-		 status = "okay";
-		 compatible = "ti,tca9538";
- 
-		 reg = < 0x70 >;
- 
-		 gpio-controller;
-		 ngpios = < 8 >;
-		 #gpio-cells = < 2 >;
- 
-		 gpio-reserved-ranges = < 7 1 >;
- 
-		 gpio-line-names =
-			 "M0",
-			 "M1",
-			 "DEC0",
-			 "DEC1",
-			 "TOFF",
-			 "STP",
-			 "DIR";
-	 };
- };
- 
+		status = "okay";
+		compatible = "ti,tca9538";
+
+		reg = <0x70>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		ngpios = <8>;
+
+		gpio-reserved-ranges = <7 1>;
+		gpio-line-names = "M0",		/* S0 */
+				  "M1",		/* S1 */
+				  "DEC0",	/* S2 */
+				  "DEC1",	/* S3 */
+				  "TOFF",	/* S4 */
+				  "STP",	/* S5 */
+				  "DIR";	/* S6 */
+	};
+};
+
 / {
- 
 	drv8424: drv8424 {
 		status = "okay";
 		compatible = "ti,drv8424";
-		//  acceleration = < 200 >;
- 
- 
-		dir-gpios = < &arduino_header 18 0 >; /* D12 */
-		step-gpios = < &arduino_header 19 0 >; /* D13 */
-		sleep-gpios = < &arduino_header 15 GPIO_ACTIVE_LOW >; /* D9 */
-		en-gpios  = < &arduino_header 14 0 >; /* D8 */
-		m0-gpios = < &mikroe_stepper_gpios 0 0 >;
-		m1-gpios = < &mikroe_stepper_gpios 1 0 >;
+
+		sleep-gpios = <&arduino_header 15 GPIO_ACTIVE_LOW>; /* D9 */
+		dir-gpios = <&arduino_header 18 0>;		    /* D12 */
+		step-gpios = <&arduino_header 19 0>;		    /* D13 */
+		en-gpios = <&arduino_header 14 0>;		    /* D8 */
+		m0-gpios = <&mikroe_stepper_gpios 0 0>;		    /* S0 */
+		m1-gpios = <&mikroe_stepper_gpios 1 0>;		    /* S1 */
+
+		/*
+		 * Timing source to generate the step signal. This one uses
+		 * a counter to generate the signal and features acceleration.
+		 */
 		timing-source = "counter-accel";
-		
+
+		/* Timing source configuration. */
 		counter = <&counter2>;
 		acceleration = <1600>;
-		
-		
+		// acceleration = <200>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+		#stepper-motor-cells = <0>;
 	};
 
+	/*
+	 * Configuration of the input device, in this a case a potentiometer
+	 * whose range has been divided into 4 discrete areas, each mapped
+	 * to a key.
+	 */
 	potentiometer_input: potentiometer_input {
-                compatible = "adc-keys";
-                keyup-threshold-mv = <10000>;
-                io-channels = <&adc1 3>;
-                sample-period-ms = <100>;
+		compatible = "adc-keys";
+		keyup-threshold-mv = <10000>;
+		io-channels = <&adc1 3>;
+		sample-period-ms = <100>;
 
-                potentiometer_key_1: potentiometer_key_1 {
-                        zephyr,code = <INPUT_KEY_1>;
-                        press-thresholds-mv = <413>;
-                };
-                potentiometer_key_2: potentiometer_key_2 {
-                        zephyr,code = <INPUT_KEY_2>;
-                        press-thresholds-mv = <1237>;
-                };
-                potentiometer_key_3: potentiometer_key_3 {
-                        zephyr,code = <INPUT_KEY_3>;
-                        press-thresholds-mv = <2062>;
-                };
-                potentiometer_key_4: potentiometer_key_4 {
-                        zephyr,code = <INPUT_KEY_4>;
-                        press-thresholds-mv = <2887>;
-                };
-        };
+		potentiometer_key_1: potentiometer_key_1 {
+			zephyr,code = <INPUT_KEY_1>;
+			press-thresholds-mv = <413>;
+		};
+		potentiometer_key_2: potentiometer_key_2 {
+			zephyr,code = <INPUT_KEY_2>;
+			press-thresholds-mv = <1237>;
+		};
+		potentiometer_key_3: potentiometer_key_3 {
+			zephyr,code = <INPUT_KEY_3>;
+			press-thresholds-mv = <2062>;
+		};
+		potentiometer_key_4: potentiometer_key_4 {
+			zephyr,code = <INPUT_KEY_4>;
+			press-thresholds-mv = <2887>;
+		};
+	};
 };
- 
- &timers2 {
-	 status = "okay";
-	 pwm2: pwm {
-		 status = "okay";
-		 pinctrl-0 = < &tim2_ch1_pa5 >;
-		 pinctrl-names = "default";
-	 };
-	 counter2: counter {
-		 status = "okay";
-	 };
- };
 
- &adc1 {
+&timers2 {
+	status = "okay";
+	pwm2: pwm {
+		status = "okay";
+		pinctrl-0 = <&tim2_ch1_pa5>;
+		pinctrl-names = "default";
+	};
+	counter2: counter {
+		 status = "okay";
+	};
+};
+
+&adc1 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 	pinctrl-0 = <&adc1_in3_pa3>;
 
-	channel@3 {/* ADC1/3 */
+	/* ADC channel configuration for the potentiometer. */
+	channel@3 {
 		reg = <3>;
 		zephyr,gain = "ADC_GAIN_1";
 		zephyr,reference = "ADC_REF_INTERNAL";
@@ -110,4 +130,3 @@
 		zephyr,resolution = <12>;
 	};
 };
- 
