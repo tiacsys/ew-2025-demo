@@ -3,109 +3,50 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
- #include <zephyr/dt-bindings/gpio/gpio.h>
+microbus_i2c: &arduino_i2c {};
+#include "mikroe_stepper_19.dtsi"
+#include "potentiometer_input.dtsi"
 
- / {
-	aliases {
-		input-device = &potentiometer_input;
-		stepper-motor = &drv8424;
-	};
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+&mikroe_stepper_driver {
+	sleep-gpios = <&arduino_header 3 GPIO_ACTIVE_LOW>;	/* A3 */
+	dir-gpios = <&arduino_header 2 0>;			/* A2 */
+	step-gpios = <&arduino_header 1 0>;			/* A1 */
+	en-gpios = <&arduino_header 4 0>;			/* A4 */
+	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
+	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
+
+	/* Timing source configuration. */
+	counter = <&counter2>;
+	acceleration = <1600>;
+	// acceleration = <200>;
 };
- 
- &i2c1 {
-	 status = "okay";
- 
-	 mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
-		 status = "okay";
-		 compatible = "ti,tca9538";
- 
-		 reg = < 0x70 >;
- 
-		 gpio-controller;
-		 ngpios = < 8 >;
-		 #gpio-cells = < 2 >;
- 
-		 gpio-reserved-ranges = < 7 1 >;
- 
-		 gpio-line-names =
-			 "M0",
-			 "M1",
-			 "DEC0",
-			 "DEC1",
-			 "TOFF",
-			 "STP",
-			 "DIR";
-	 };
- };
- 
-/ {
- 
-	drv8424: drv8424 {
+
+&timers2 {
+	status = "okay";
+
+	pwm2: pwm {
 		status = "okay";
-		compatible = "ti,drv8424";
-		//  acceleration = < 200 >;
- 
- 
-		dir-gpios = < &arduino_header 2 0 >; 
-		step-gpios = < &arduino_header 1 0 >; 
-		sleep-gpios = < &arduino_header 3 GPIO_ACTIVE_LOW >;
-		en-gpios  = < &arduino_header 4 0 >; 
-		m0-gpios = < &mikroe_stepper_gpios 0 0 >;
-		m1-gpios = < &mikroe_stepper_gpios 1 0 >;
-		timing-source = "counter-accel";
-		
-		counter = <&counter2>;
-		acceleration = <1600>;
-		
-		
+		pinctrl-0 = <&tim2_ch1_pa5>;
+		pinctrl-names = "default";
 	};
 
-	potentiometer_input: potentiometer_input {
-                compatible = "adc-keys";
-                keyup-threshold-mv = <10000>;
-                io-channels = <&adc1 1>;
-                sample-period-ms = <50>;
-
-                potentiometer_key_1: potentiometer_key_1 {
-                        zephyr,code = <INPUT_KEY_1>;
-                        press-thresholds-mv = <413>;
-                };
-                potentiometer_key_2: potentiometer_key_2 {
-                        zephyr,code = <INPUT_KEY_2>;
-                        press-thresholds-mv = <1237>;
-                };
-                potentiometer_key_3: potentiometer_key_3 {
-                        zephyr,code = <INPUT_KEY_3>;
-                        press-thresholds-mv = <2062>;
-                };
-                potentiometer_key_4: potentiometer_key_4 {
-                        zephyr,code = <INPUT_KEY_4>;
-                        press-thresholds-mv = <2887>;
-                };
-        };
+	counter2: counter {
+		 status = "okay";
+	};
 };
- 
- &timers2 {
-	 status = "okay";
-	 pwm2: pwm {
-		 status = "okay";
-		 pinctrl-0 = < &tim2_ch1_pa5 >;
-		 pinctrl-names = "default";
-	 };
-	 counter2: counter {
-		 status = "okay";
-	 };
- };
 
- &adc1 {
+&adc1 {
 	#address-cells = <1>;
 	#size-cells = <0>;
 	status = "okay";
 	st,adc-clock-source = "SYNC";
-	st,adc-prescaler = < 0x2 >;
-	pinctrl-0 = < &adc1_in1_pa0 >;
+	st,adc-prescaler = <0x2>;
+	pinctrl-0 = <&adc1_in1_pa0>;
 	pinctrl-names = "default";
 
+	/* ADC channel configuration for the potentiometer. */
 	channel@1 {
 		reg = <1>;
 		zephyr,gain = "ADC_GAIN_1";
@@ -114,4 +55,7 @@
 		zephyr,resolution = <12>;
 	};
 };
- 
+
+&potentiometer_input {
+	io-channels = <&adc1 1>;
+};

@@ -22,6 +22,7 @@ manifest:
       # but this requires additional disk space and might slow down the build process.
       import:
         name-allowlist:
+          - hal_nxp
           - hal_stm32
           - hal_rpi_pico
           - cmsis

@@ -52,7 +52,7 @@ This also demonstrates another strength of Zephyr, the same application can, wit
 2. Open terminal in workspace directory
 3. Install Dependencies
     - If you have an Ubuntu older than 22.04 add kitware repository: `wget https://apt.kitware.com/kitware-archive.sh` then `sudo bash kitware-archive.sh`
-    - Use Apt to install dependencies: 
+    - Use Apt to install dependencies:
     ```
     sudo apt install --no-install-recommends git cmake ninja-build gperf \
       ccache dfu-util device-tree-compiler wget \
@@ -68,6 +68,7 @@ This also demonstrates another strength of Zephyr, the same application can, wit
 4. Install Zephyr and get the Demo
     - Install Python `venv` package: `sudo apt install python3-venv`
     - Create virtual Python environment: `python3 -m venv --clear --copies --prompt=".venv" .env`
+    - Upgrade Python PIP: `pip install --upgrade pip`
     - Source virtual environment (needs to be repeated every time you start working): `source .env/bin/activate`
     - Install West: `pip3 install west`
     - Clone repository: `west init -m https://github.com/tiacsys/ew-2025-demo` then `west update`
