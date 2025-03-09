@@ -3,17 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/dt-bindings/gpio/gpio.h>
+microbus_i2c: &pico_i2c1 {};
+#include "mikroe_stepper_19.dtsi"
 #include "potentiometer_input.dtsi"
 
-/*
- * Aliases for the devices used in the demo, this allows them
- * to be used without knowing the exact hardware configuration.
- */
-/ {
-	aliases {
-		stepper-motor = &drv8424;
-	};
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+&mikroe_stepper_driver {
+	sleep-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;		/* GP21 */
+	dir-gpios = <&gpio0 20 0>;				/* GP20 */
+	step-gpios = <&gpio0 19 0>;				/* GP19 */
+	en-gpios  = <&gpio0 18 0>;				/* GP18 */
+	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
+	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
+
+	/* Timing source configuration. */
+	counter = <&rpi_pico_pit_channel>;
+	accurate-steps = <15>;
+	acceleration = <1600>;
 };
 
 / {
@@ -36,67 +43,6 @@
 				#pico-pit-channel-cells = <0>;
 			};
 		};
-	};
-};
-
-&i2c1 {
-	status = "okay";
-
-	/*
-	 * Configuration of the extension board that houses
-	 * the stepper motor controller.
-	 */
-	mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
-		status = "okay";
-		compatible = "ti,tca9538";
-
-		reg = <0x70>;
-
-		gpio-controller;
-		#gpio-cells = <2>;
-
-		ngpios = <8>;
-
-		gpio-reserved-ranges = <7 1>;
-		gpio-line-names = "M0",		/* S0 */
-				  "M1",		/* S1 */
-				  "DEC0",	/* S2 */
-				  "DEC1",	/* S3 */
-				  "TOFF",	/* S4 */
-				  "STP",	/* S5 */
-				  "DIR";	/* S6 */
-	};
-};
-
-/ {
-
-	/* Configuration of the stepper motor river, a DRV8424 */
-	drv8424: drv8424 {
-		status = "okay";
-		compatible = "ti,drv8424";
-
-
-		sleep-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;	    /* GP21 */
-		dir-gpios = <&gpio0 20 0>;			    /* GP20 */
-		step-gpios = <&gpio0 19 0>;			    /* GP19 */
-		en-gpios  = <&gpio0 18 0>;			    /* GP18 */
-		m0-gpios = <&mikroe_stepper_gpios 0 0>;		    /* S0 */
-		m1-gpios = <&mikroe_stepper_gpios 1 0>;		    /* S1 */
-
-		/*
-		 * Timing source to generate the step signal. This one uses
-		 * a counter to generate the signal and features acceleration.
-		 */
-		timing-source = "counter-accel";
-
-		/* Timing source configuration. */
-		counter = <&rpi_pico_pit_channel>;
-		accurate-steps = <15>;
-		acceleration = <1600>;
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-		#stepper-motor-cells = <0>;
 	};
 };
 

@@ -3,85 +3,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <zephyr/dt-bindings/gpio/gpio.h>
+microbus_i2c: &arduino_i2c {};
+#include "mikroe_stepper_19.dtsi"
 #include "potentiometer_input.dtsi"
 
-/*
- * Aliases for the devices used in the demo, this allows them
- * to be used without knowing the exact hardware configuration.
- */
-/ {
-	aliases {
-		stepper-motor = &drv8424;
-	};
-};
+#include <zephyr/dt-bindings/gpio/gpio.h>
 
-&i2c1 {
-	status = "okay";
+&mikroe_stepper_driver {
+	sleep-gpios = <&arduino_header 3 GPIO_ACTIVE_LOW>;	/* A3 */
+	dir-gpios = <&arduino_header 2 0>;			/* A2 */
+	step-gpios = <&arduino_header 1 0>;			/* A1 */
+	en-gpios = <&arduino_header 4 0>;			/* A4 */
+	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
+	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
 
-	/*
-	 * Configuration of the extension board that houses
-	 * the stepper motor controller.
-	 */
-	mikroe_stepper_gpios: mikroe_stepper_ctrl_tca9538a@70 {
-		status = "okay";
-		compatible = "ti,tca9538";
-
-		reg = <0x70>;
-
-		gpio-controller;
-		#gpio-cells = <2>;
-
-		ngpios = <8>;
-
-		gpio-reserved-ranges = <7 1>;
-		gpio-line-names = "M0",		/* S0 */
-				  "M1",		/* S1 */
-				  "DEC0",	/* S2 */
-				  "DEC1",	/* S3 */
-				  "TOFF",	/* S4 */
-				  "STP",	/* S5 */
-				  "DIR";	/* S6 */
-	};
-};
-
-/ {
-
-	drv8424: drv8424 {
-		status = "okay";
-		compatible = "ti,drv8424";
-
-		sleep-gpios = <&arduino_header 3 GPIO_ACTIVE_LOW>;  /* A3 */
-		dir-gpios = <&arduino_header 2 0>;		    /* A2 */
-		step-gpios = <&arduino_header 1 0>;		    /* A1 */
-		en-gpios = <&arduino_header 4 0>;		    /* A4 */
-		m0-gpios = <&mikroe_stepper_gpios 0 0>;		    /* S0 */
-		m1-gpios = <&mikroe_stepper_gpios 1 0>;		    /* S1 */
-
-		/*
-		 * Timing source to generate the step signal. This one uses
-		 * a counter to generate the signal and features acceleration.
-		 */
-		timing-source = "counter-accel";
-
-		/* Timing source configuration. */
-		counter = <&counter2>;
-		acceleration = <1600>;
-		// acceleration = <200>;
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-		#stepper-motor-cells = <0>;
-	};
+	/* Timing source configuration. */
+	counter = <&counter2>;
+	acceleration = <1600>;
+	// acceleration = <200>;
 };
 
 &timers2 {
 	status = "okay";
+
 	pwm2: pwm {
 		status = "okay";
 		pinctrl-0 = <&tim2_ch1_pa5>;
 		pinctrl-names = "default";
 	};
+
 	counter2: counter {
 		 status = "okay";
 	};
