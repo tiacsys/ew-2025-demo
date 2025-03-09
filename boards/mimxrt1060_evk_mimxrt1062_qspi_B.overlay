@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
-#include <zephyr/dt-bindings/input/input-event-codes.h>
+#include "potentiometer_input.dtsi"
 
 /*
  * Aliases for the devices used in the demo, this allows them
@@ -12,7 +12,6 @@
  */
 / {
 	aliases {
-		input-device = &potentiometer_input;
 		stepper-motor = &drv8424;
 	};
 };
@@ -74,40 +73,6 @@
 		#size-cells = <0>;
 		#stepper-motor-cells = <0>;
 	};
-
-	/*
-	 * Configuration of the input device, in this a case a potentiometer
-	 * whose range has been divided into 4 discrete areas, each mapped
-	 * to a key.
-	 */
-	potentiometer_input: potentiometer_input {
-		compatible = "adc-keys";
-		keyup-threshold-mv = <10000>;
-		io-channels = <&adc1 0>;
-		sample-period-ms = <100>;
-
-		/*
-		 * Key selection is based on the threshold that is closest
-		 * to the current potentiometer value instead of defining
-		 * borders.
-		 */
-		potentiometer_key_1: potentiometer_key_1 {
-			zephyr,code = <INPUT_KEY_1>;
-			press-thresholds-mv = <413>;
-		};
-		potentiometer_key_2: potentiometer_key_2 {
-			zephyr,code = <INPUT_KEY_2>;
-			press-thresholds-mv = <1237>;
-		};
-		potentiometer_key_3: potentiometer_key_3 {
-			zephyr,code = <INPUT_KEY_3>;
-			press-thresholds-mv = <2062>;
-		};
-		potentiometer_key_4: potentiometer_key_4 {
-			zephyr,code = <INPUT_KEY_4>;
-			press-thresholds-mv = <2887>;
-		};
-	};
 };
 
 &pit0_channel0 {
@@ -126,4 +91,8 @@
 		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
 		zephyr,resolution = <12>;
 	};
+};
+
+&potentiometer_input {
+	io-channels = <&adc1 0>;
 };

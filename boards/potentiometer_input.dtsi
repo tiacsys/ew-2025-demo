@@ -1,0 +1,49 @@
+/*
+ * Copyright (c) 2025 Navimatix GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/*
+ * Aliases for the devices used in the demo, this allows them
+ * to be used without knowing the exact hardware configuration.
+ */
+/ {
+	aliases {
+		input-device = &potentiometer_input;
+	};
+};
+
+/ {
+
+	/*
+	 * Configuration of the input device, in this a case a potentiometer
+	 * whose range has been divided into 4 discrete areas, each mapped
+	 * to a key.
+	 */
+	potentiometer_input: potentiometer-input {
+                compatible = "adc-keys";
+                keyup-threshold-mv = <10000>;
+		sample-period-ms = <50>;
+
+		/* Key selection is based on the threshold that is closest to the current
+		   potentiometer value instead of defining borders. */
+                potentiometer_key_1: potentiometer-key-1 {
+                        zephyr,code = <INPUT_KEY_1>;
+                        press-thresholds-mv = <413>;
+                };
+                potentiometer_key_2: potentiometer-key-2 {
+                        zephyr,code = <INPUT_KEY_2>;
+                        press-thresholds-mv = <1237>;
+                };
+                potentiometer_key_3: potentiometer-key-3 {
+                        zephyr,code = <INPUT_KEY_3>;
+                        press-thresholds-mv = <2062>;
+                };
+                potentiometer_key_4: potentiometer-key-4 {
+                        zephyr,code = <INPUT_KEY_4>;
+                        press-thresholds-mv = <2887>;
+                };
+        };
+};
