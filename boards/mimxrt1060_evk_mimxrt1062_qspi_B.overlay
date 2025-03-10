@@ -10,9 +10,9 @@ microbus_i2c: &arduino_i2c {};
 #include <zephyr/dt-bindings/gpio/gpio.h>
 
 &mikroe_stepper_driver {
-	sleep-gpios = <&arduino_header 8 GPIO_ACTIVE_LOW>;	/* D2 */
-	dir-gpios = <&arduino_header 9 0>;			/* D3 */
-	step-gpios = <&arduino_header 10 0>;			/* D4 */
+	sleep-gpios = <&arduino_header 9 GPIO_ACTIVE_LOW>;	/* D3 */
+	dir-gpios = <&arduino_header 10 0>;			/* D4 */
+	step-gpios = <&arduino_header 8 0>;			/* D2 */
 	en-gpios = <&arduino_header 11 0>;			/* D5 */
 	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
 	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
@@ -20,8 +20,7 @@ microbus_i2c: &arduino_i2c {};
 	/* Timing source configuration. */
 	counter = <&pit0_channel0>;
 	accurate-steps = <15>;
-	acceleration = <800>;
-	// acceleration = <200>;
+	acceleration = <1600>;
 };
 
 &pit0_channel0 {

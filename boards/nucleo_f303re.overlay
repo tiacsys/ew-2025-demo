@@ -20,17 +20,10 @@ microbus_i2c: &arduino_i2c {};
 	/* Timing source configuration. */
 	counter = <&counter2>;
 	acceleration = <1600>;
-	// acceleration = <200>;
 };
 
 &timers2 {
 	status = "okay";
-
-	pwm2: pwm {
-		status = "okay";
-		pinctrl-0 = <&tim2_ch1_pa5>;
-		pinctrl-names = "default";
-	};
 
 	counter2: counter {
 		 status = "okay";

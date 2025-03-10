@@ -14,7 +14,7 @@ manifest:
       # We are using a fork of zephyr of the tiacsys organization
       remote: tiacsys
       # Zephyr branch used for this demo
-      revision: acceleration-demo
+      revision: ew-2025-demo-20250309
       # Allows for calling o west commands without giving script source paths every time
       west-commands: scripts/west-commands.yml
       # Import the external modules required for this project using a whitelist. During
