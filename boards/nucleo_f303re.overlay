@@ -4,22 +4,32 @@
  */
 
 microbus_i2c: &arduino_i2c {};
-#include "mikroe_stepper_19.dtsi"
+mikrobus_spi: &spi1 {};
+#include "mikroe_silent_step_2.dtsi"
 #include "potentiometer_input.dtsi"
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
 
 &mikroe_stepper_driver {
-	sleep-gpios = <&arduino_header 3 GPIO_ACTIVE_LOW>;	/* A3 */
 	dir-gpios = <&arduino_header 2 0>;			/* A2 */
 	step-gpios = <&arduino_header 1 0>;			/* A1 */
-	en-gpios = <&arduino_header 4 0>;			/* A4 */
-	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
-	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
+	en-gpios = <&mikroe_stepper_gpios 0 GPIO_ACTIVE_LOW>;			/* A4 */
 
 	/* Timing source configuration. */
 	counter = <&counter2>;
+	timing-source = "counter-accel";
 	acceleration = <1600>;
+	
+	irun = <20>;
+	ihold = <20>;
+	stealth-chop-enabled;
+};
+
+&mikrobus_spi {
+	pinctrl-0 = <&spi1_sck_pa5 &spi1_miso_pa6 &spi1_mosi_pa7>;
+	pinctrl-names = "default";
+	cs-gpios = < &arduino_header 16 0x11 >;
+	status = "okay";
 };
 
 &timers2 {

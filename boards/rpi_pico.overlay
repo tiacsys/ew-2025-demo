@@ -4,23 +4,45 @@
  */
 
 microbus_i2c: &pico_i2c1 {};
-#include "mikroe_stepper_19.dtsi"
+mikrobus_spi: &spi1 {};
+#include "mikroe_silent_step_2.dtsi"
 #include "potentiometer_input.dtsi"
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
 
 &mikroe_stepper_driver {
-	sleep-gpios = <&gpio0 21 GPIO_ACTIVE_LOW>;		/* GP21 */
 	dir-gpios = <&gpio0 20 0>;				/* GP20 */
 	step-gpios = <&gpio0 19 0>;				/* GP19 */
-	en-gpios  = <&gpio0 18 0>;				/* GP18 */
-	m0-gpios = <&mikroe_stepper_gpios 0 0>;			/* S0 */
-	m1-gpios = <&mikroe_stepper_gpios 1 0>;			/* S1 */
+	en-gpios = <&mikroe_stepper_gpios 0 GPIO_ACTIVE_LOW>;
 
 	/* Timing source configuration. */
 	counter = <&rpi_pico_pit_channel>;
+	timing-source = "counter-accel";
 	accurate-steps = <15>;
 	acceleration = <1600>;
+
+	irun = <20>;
+	ihold = <20>;
+	stealth-chop-enabled;
+};
+
+&pinctrl {
+	spi1_default: spi1_default {
+		group1 {
+			pinmux = <SPI1_CSN_P9>, <SPI1_SCK_P10>, <SPI1_TX_P11>;
+		};
+		group2 {
+			pinmux = <SPI1_RX_P12>;
+			input-enable;
+		};
+	};
+
+};
+
+&mikrobus_spi {
+	clock-frequency = < 0x7a1200 >;
+	pinctrl-0 = <&spi1_default>;
+	pinctrl-names = "default";
 };
 
 / {

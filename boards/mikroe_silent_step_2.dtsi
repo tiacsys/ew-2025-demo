@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2025 Navimatix GmbH
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
+ * Aliases for the devices used in the demo, this allows them
+ * to be used without knowing the exact hardware configuration.
+ */
+/ {
+	aliases {
+		stepper-motor = &mikroe_stepper_driver;
+	};
+};
+
+&mikrobus_spi {
+	status = "okay";
+	mikroe_stepper_driver: tmc2130@0 {
+		compatible = "adi,tmc2130-spi-step-dir";
+		reg = <0>;
+		spi-max-frequency = <DT_FREQ_M(1)>; /* Maximum SPI bus frequency */
+	};
+};
+
+&microbus_i2c {
+	status = "okay";
+
+	/* Configuration of the IO expander for driver setups, a TCA9538A. */
+	mikroe_stepper_gpios: tca9538a@70 {
+		compatible = "ti,tca9538";
+		status = "okay";
+
+		reg = <0x70>;
+
+		gpio-controller;
+		#gpio-cells = <2>;
+
+		ngpios = <8>;
+
+		gpio-reserved-ranges = <3 1>;
+		gpio-line-names = "EN",		/* P0 */
+				  "FT1",	/* P1 */
+				  "FT2";	/* P2 */
+	};
+};
